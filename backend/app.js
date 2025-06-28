@@ -60,3 +60,7 @@ app.use(router);
 app.listen(process.env.PORT, () => {
   console.log(`✅ Server listening at port ${process.env.PORT}`);
 });
+
+app.get("/", (req, res) => {
+  res.send("🎉 Gym Fitness Tracker Backend is Running Successfully!");
+});
