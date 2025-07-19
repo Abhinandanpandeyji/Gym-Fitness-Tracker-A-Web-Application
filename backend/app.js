@@ -1,9 +1,9 @@
 import express from "express";
 import cors from "cors";
 import { config } from "dotenv";
+import { sendEmail } from "./utils/sendEmail.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import { sendEmail } from "./utils/sendEmail.js";
 
 // Load environment variables
 config({ path: "./config.env" });
@@ -11,15 +11,11 @@ config({ path: "./config.env" });
 const app = express();
 const router = express.Router();
 
-// ES Module dirname fix
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Middleware
+// CORS
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "*", // allow all for Render
-    methods: ["POST", "GET"],
+    origin: process.env.FRONTEND_URL,
+    methods: ["POST"],
     credentials: true,
   })
 );
@@ -27,7 +23,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ✅ API Route for sending email
+// Email API
 router.post("/send/mail", async (req, res) => {
   const { name, email, message } = req.body;
 
@@ -40,10 +36,10 @@ router.post("/send/mail", async (req, res) => {
 
   try {
     await sendEmail({
-      email: "abhinandanpan2401@gmail.com", // where email is received
+      email: "merndeveloper4@gmail.com",
       subject: "GYM WEBSITE CONTACT",
       message,
-      userEmail: email, // sender's email
+      userEmail: email,
     });
 
     res.status(200).json({
@@ -59,19 +55,20 @@ router.post("/send/mail", async (req, res) => {
   }
 });
 
-// Attach router
 app.use(router);
 
-// ✅ Serve Frontend (React Build) for Render
+// ✅ Serve React Frontend
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const frontendPath = path.join(__dirname, "../frontend/dist");
+
 app.use(express.static(frontendPath));
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-// ✅ Start Server
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
+// Start server
+app.listen(process.env.PORT || 10000, () => {
+  console.log(`✅ Server listening at port ${process.env.PORT}`);
 });
