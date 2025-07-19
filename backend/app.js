@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import { config } from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import { sendEmail } from "./utils/sendEmail.js";
 
 // Load environment variables
@@ -9,11 +11,15 @@ config({ path: "./config.env" });
 const app = express();
 const router = express.Router();
 
+// ES Module dirname fix
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
-    methods: ["POST"],
+    origin: process.env.FRONTEND_URL || "*", // allow all for Render
+    methods: ["POST", "GET"],
     credentials: true,
   })
 );
@@ -21,7 +27,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// API Route for sending email
+// ✅ API Route for sending email
 router.post("/send/mail", async (req, res) => {
   const { name, email, message } = req.body;
 
@@ -34,7 +40,7 @@ router.post("/send/mail", async (req, res) => {
 
   try {
     await sendEmail({
-      email: "merndeveloper4@gmail.com", // where email is received
+      email: "abhinandanpan2401@gmail.com", // where email is received
       subject: "GYM WEBSITE CONTACT",
       message,
       userEmail: email, // sender's email
@@ -56,11 +62,16 @@ router.post("/send/mail", async (req, res) => {
 // Attach router
 app.use(router);
 
-// Start server
-app.listen(process.env.PORT, () => {
-  console.log(`✅ Server listening at port ${process.env.PORT}`);
+// ✅ Serve Frontend (React Build) for Render
+const frontendPath = path.join(__dirname, "../frontend/dist");
+app.use(express.static(frontendPath));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendPath, "index.html"));
 });
 
-app.get("/", (req, res) => {
-  res.send("🎉 Gym Fitness Tracker Backend is Running Successfully!");
+// ✅ Start Server
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
 });
